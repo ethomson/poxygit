@@ -1,0 +1,7 @@
+.classpath
+.project
+.settings
+*.class
+*.jar
+hs_err_pid*
+target/
