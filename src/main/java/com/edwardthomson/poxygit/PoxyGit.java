@@ -47,7 +47,7 @@ public class PoxyGit
 
 	private static void usage()
 	{
-		System.err.println("Usage: PoxyGit [-q|--quiet] [-d|--debug] [--trace]");
+		System.err.println("Usage: PoxyGit [-q|--quiet] [-d|--debug] [--trace] [--credentials user:pass]");
 		System.err.println("       [-a|--address address] [-p|--port port] [-s|--ssl-port port]");
 		System.err.println("       <project root>");
 	}
