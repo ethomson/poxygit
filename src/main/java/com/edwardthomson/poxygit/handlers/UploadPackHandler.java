@@ -65,7 +65,7 @@ public class UploadPackHandler extends RequestHandler
 		response.writeHeader(new Header("Pragma", "no-cache"));
 		response.writeHeader(new Header("Cache-Control", "no-cache, max-age=0, must-revalidate"));
 		response.writeHeader(new Header("Transfer-Encoding", "chunked"));
-		response.writeHeader(new Header("Content-Type", "application/x-git-upload-pack-advertisement"));
+		response.writeHeader(new Header("Content-Type", "application/x-git-upload-pack-result"));
 		response.endHeaders();
 
 		InputStream requestStream = request.getInputStream();
