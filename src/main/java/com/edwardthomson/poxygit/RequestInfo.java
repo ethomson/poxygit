@@ -15,6 +15,7 @@ public class RequestInfo
 {
 	public enum RequestType
 	{
+		Anonymous("anonymous"),
 		Basic("basic"),
 		NTLM("ntlm"),
 		BrokenNTLM("broken-ntlm");
