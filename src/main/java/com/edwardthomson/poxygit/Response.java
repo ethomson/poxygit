@@ -77,6 +77,14 @@ public class Response
 		return headers;
 	}
 
+	public void writeContinue() throws IOException
+	{
+		writeStatus(100, "Continue");
+		endHeaders();
+
+		flush();
+	}
+
 	/**
 	 * Sends a complete error response to the user and flushes the output.
 	 * <p>

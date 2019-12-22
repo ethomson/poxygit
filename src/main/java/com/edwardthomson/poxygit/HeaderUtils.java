@@ -109,6 +109,19 @@ public abstract class HeaderUtils
 		return false;
 	}
 
+	public static boolean isExpectContinue(List<Header> headers)
+	{
+		for (Header h : headers)
+		{
+			if (h.matchesName(Constants.EXPECT_HEADER) && h.getValue().equalsIgnoreCase(Constants.EXPECT_CONTINUE))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	public static long getContentLength(List<Header> headers)
 	{
 

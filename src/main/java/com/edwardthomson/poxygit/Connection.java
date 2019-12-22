@@ -59,6 +59,7 @@ public class Connection implements Runnable
 	{
 		Stop,
 		Retry,
+		SendContinue,
 		OK
 	}
 
@@ -205,6 +206,11 @@ public class Connection implements Runnable
 				else if (routing.getStatus() == RequestStatus.Retry)
 				{
 					continue;
+				}
+
+				if (HeaderUtils.isExpectContinue(request.getHeaders()))
+				{
+					response.writeContinue();
 				}
 
 				final RequestHandler handler = routing.getHandler();
@@ -404,7 +410,8 @@ public class Connection implements Runnable
 			logger.write(LogLevel.DEBUG, "Authentication failed in Basic response");
 		}
 
-		if (request.getMethod().equals(Constants.POST_METHOD) && !readRequestBuffer(request, response))
+		if (request.getMethod().equals(Constants.POST_METHOD) && !HeaderUtils.isExpectContinue(request.getHeaders()) &&
+				!readRequestBuffer(request, response))
 		{
 			return false;
 		}

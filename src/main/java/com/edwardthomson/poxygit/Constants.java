@@ -51,4 +51,6 @@ public interface Constants
 	public static final String TRANSFER_ENCODING_CHUNKED = "chunked";
 	public static final String TRANSFER_ENCODING_IDENTITY = "identity";
 
+	public static final String EXPECT_HEADER = "Expect";
+	public static final String EXPECT_CONTINUE = "100-continue";
 }
