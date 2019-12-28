@@ -27,13 +27,15 @@ public class ReferencesHandler extends RequestHandler
 {
 	private static final Logger logger = Logger.getLogger(ReferencesHandler.class);
 
-	private String repositoryPath;
+	private final String repositoryPath;
+	private final String service;
 
-	public ReferencesHandler(Connection connection, String repositoryPath)
+	public ReferencesHandler(Connection connection, String repositoryPath, String service)
 	{
 		super(connection);
 
 		this.repositoryPath = repositoryPath;
+		this.service = service;
 	}
 
 	@Override
@@ -44,15 +46,15 @@ public class ReferencesHandler extends RequestHandler
 		response.writeHeader(new Header("Pragma", "no-cache"));
 		response.writeHeader(new Header("Cache-Control", "no-cache, max-age=0, must-revalidate"));
 		response.writeHeader(new Header("Transfer-Encoding", "chunked"));
-		response.writeHeader(new Header("Content-Type", "application/x-git-upload-pack-advertisement"));
+		response.writeHeader(new Header("Content-Type", String.format("application/x-git-%s-advertisement", service)));
 		response.endHeaders();
 
 		OutputStream outputStream = response.getStream();
-		IOUtils.writeChunk(outputStream, createSmartLine("# service=git-upload-pack\n"));
+		IOUtils.writeChunk(outputStream, createSmartLine(String.format("# service=git-%s\n", service)));
 		IOUtils.writeChunk(outputStream, "0000");
 
 		Process proc = Runtime.getRuntime()
-				.exec(new String[] { "git", "upload-pack", "--stateless-rpc", "--advertise-refs", repositoryPath });
+				.exec(new String[] { "git", service, "--stateless-rpc", "--advertise-refs", repositoryPath });
 		IOUtils.copyStreamToChunkedStream(proc.getInputStream(), outputStream);
 
 		IOUtils.writeChunkEnd(outputStream);

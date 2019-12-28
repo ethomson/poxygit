@@ -189,20 +189,83 @@ public class IOUtils
 		}
 	}
 
+	private static int readChunkHeader(InputStream input) throws IOException
+	{
+		int len = 0;
+		byte[] hex = new byte[1];
+		boolean seenCR = false, zero = false;
+
+		while (input.read(hex, 0, 1) == 1)
+		{
+			if (seenCR ^ hex[0] == '\n')
+			{
+				throw new IOException("invalid chunk length header");
+			}
+			else if (hex[0] == '\n' && len == 0 && !zero)
+			{
+				zero = true;
+				seenCR = false;
+			}
+			else if (hex[0] == '\n')
+			{
+				return len;
+			}
+			else if (hex[0] == '\r')
+			{
+				seenCR = true;
+			}
+			else if (zero)
+			{
+				throw new IOException("invalid chunk length header");
+			}
+			else
+			{
+				len *= 16;
+
+				if (hex[0] >= '0' && hex[0] <= '9')
+				{
+					len += hex[0] - '0';
+				}
+				else if (hex[0] >= 'a' && hex[0] <= 'f')
+				{
+					len += (hex[0] - 'a') + 10;
+				}
+				else if (hex[0] >= 'A' && hex[0] <= 'F')
+				{
+					len += (hex[0] - 'A') + 10;
+				}
+				else
+				{
+					throw new IOException("invalid chunk length header");
+				}
+			}
+		}
+
+		throw new IOException("truncated chunk length header");
+	}
+
+	private static void readChunkTrailer(InputStream input) throws IOException
+	{
+		byte[] newline = new byte[2];
+
+		if (input.read(newline, 0, 2) != 2 || newline[0] != '\r' || newline[1] != '\n')
+		{
+			throw new IOException("invalid chunk trailer");
+		}
+	}
+
 	public static void copyChunkedStreamToStream(InputStream input, OutputStream output) throws IOException
 	{
-		byte[] hexlen = new byte[4];
 		byte[] buf = new byte[2048];
 
 		while (true)
 		{
+			int len = readChunkHeader(input);
 
-			if (input.read(hexlen, 0, 4) < 4)
+			if (len == 0)
 			{
-				throw new IOException("end-of-file reading chunk length");
+				break;
 			}
-
-			int len = Integer.parseInt(UTF8Utils.decode(hexlen), 16);
 
 			while (len > 0)
 			{
@@ -218,6 +281,8 @@ public class IOUtils
 				output.write(buf, 0, readlen);
 				len -= readlen;
 			}
+
+			readChunkTrailer(input);
 		}
 	}
 

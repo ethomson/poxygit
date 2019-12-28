@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutorService;
 
 import com.edwardthomson.poxygit.RequestInfo.GitRequestType;
 import com.edwardthomson.poxygit.RequestInfo.RequestType;
+import com.edwardthomson.poxygit.handlers.ReceivePackHandler;
 import com.edwardthomson.poxygit.handlers.ReferencesHandler;
 import com.edwardthomson.poxygit.handlers.RequestHandler;
 import com.edwardthomson.poxygit.handlers.UploadPackHandler;
@@ -324,18 +325,22 @@ public class Connection implements Runnable
 			}
 		}
 
-		if (requestInfo.getGitRequestType() == GitRequestType.References && !requestInfo.isSmart())
+		if (requestInfo.getGitRequestType() == GitRequestType.References && requestInfo.getService() == null)
 		{
 			response.writeError(Status.BAD_REQUEST, "Dumb HTTP is not supported");
 			return null;
 		}
 		else if (requestInfo.getGitRequestType() == GitRequestType.References)
 		{
-			return new RequestRoute(new ReferencesHandler(this, repositoryPath));
+			return new RequestRoute(new ReferencesHandler(this, repositoryPath, requestInfo.getService()));
 		}
 		else if (requestInfo.getGitRequestType() == GitRequestType.UploadPack)
 		{
 			return new RequestRoute(new UploadPackHandler(this, repositoryPath));
+		}
+		else if (requestInfo.getGitRequestType() == GitRequestType.ReceivePack)
+		{
+			return new RequestRoute(new ReceivePackHandler(this, repositoryPath));
 		}
 
 		response.writeError(Status.INTERNAL_SERVER_ERROR, "Unhandled " + request.getMethod() + " request");
