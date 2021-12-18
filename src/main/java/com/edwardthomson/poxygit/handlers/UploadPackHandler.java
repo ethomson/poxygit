@@ -68,31 +68,11 @@ public class UploadPackHandler extends RequestHandler
 		response.writeHeader(new Header("Content-Type", "application/x-git-upload-pack-result"));
 		response.endHeaders();
 
-		InputStream requestStream = request.getInputStream();
-		OutputStream responseStream = response.getStream();
-
 		Process proc = Runtime.getRuntime()
 				.exec(new String[] { "git", "upload-pack", "--stateless-rpc", repositoryPath });
 
-		if (chunked)
-		{
-			IOUtils.copyChunkedStreamToStream(request.getInputStream(), proc.getOutputStream());
-		}
-		else if (gzip)
-		{
-			requestStream = new GZIPInputStream(requestStream, (int) contentLength);
-			IOUtils.copyStream(requestStream, proc.getOutputStream(), -1);
-		}
-		else
-		{
-			IOUtils.copyStream(requestStream, proc.getOutputStream(), contentLength);
-		}
-		proc.getOutputStream().flush();
-
-		IOUtils.copyStreamToChunkedStream(proc.getInputStream(), responseStream);
-		responseStream.flush();
-
-		IOUtils.writeChunkEnd(responseStream);
+		IOUtils.copyHttpStreamToStream(request.getHeaders(), request.getInputStream(), proc.getOutputStream());
+		IOUtils.copyStreamToChunkedStream(proc.getInputStream(), response.getStream());
 
 		return true;
 	}

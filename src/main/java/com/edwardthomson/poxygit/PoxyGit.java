@@ -49,7 +49,10 @@ public class PoxyGit
 	{
 		System.err.println("Usage: PoxyGit [-q|--quiet] [-d|--debug] [--trace] [--credentials user:pass]");
 		System.err.println("       [-a|--address address] [-p|--port port] [-s|--ssl-port port]");
+		System.err.println("       [--ssl-keystore keystore] [--ssl-keystore-password password]");
+		System.err.println("       [--redirect-host host]");
 		System.err.println("       <project root>");
+
 	}
 
 	public void run()
@@ -168,6 +171,9 @@ public class PoxyGit
 
 				/* Authentication */
 				new Option("credentials", true, true),
+				
+				/* Redirects */
+				new Option("redirect-host", true),
 
 				/* Debugging aids */
 				new Option("add-response-delay", true, "0") };
@@ -262,6 +268,11 @@ public class PoxyGit
 			if (getOptions.getArgument("add-response-delay") != null)
 			{
 				gitOptions.setResponseDelayMilliseconds(Integer.parseInt(getOptions.getArgument("add-response-delay")));
+			}
+			
+			if (getOptions.getArgument("redirect-host") != null)
+			{
+				gitOptions.setRedirectHost(getOptions.getArgument("redirect-host"));
 			}
 		}
 		catch (NumberFormatException e)

@@ -57,8 +57,6 @@ public class ReferencesHandler extends RequestHandler
 				.exec(new String[] { "git", service, "--stateless-rpc", "--advertise-refs", repositoryPath });
 		IOUtils.copyStreamToChunkedStream(proc.getInputStream(), outputStream);
 
-		IOUtils.writeChunkEnd(outputStream);
-
 		return true;
 	}
 }

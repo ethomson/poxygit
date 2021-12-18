@@ -16,6 +16,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.GZIPInputStream;
 
 import com.edwardthomson.poxygit.logger.LogLevel;
 import com.edwardthomson.poxygit.logger.Logger;
@@ -187,6 +188,8 @@ public class IOUtils
 
 			writeChunk(output, buf, len);
 		}
+
+		IOUtils.writeChunkEnd(output);
 	}
 
 	private static int readChunkHeader(InputStream input) throws IOException
@@ -310,5 +313,28 @@ public class IOUtils
 	{
 		stream.write(new byte[] { '0', '\r', '\n', '\r', '\n' });
 		stream.flush();
+	}
+	
+	public static void copyHttpStreamToStream(List<Header> headers, InputStream input, OutputStream output) throws IOException
+	{
+		long contentLength = HeaderUtils.getContentLength(headers);
+		boolean chunked = false;
+		boolean gzip = HeaderUtils.isGzip(headers);
+
+		if (chunked)
+		{
+			IOUtils.copyChunkedStreamToStream(input, output);
+		}
+		else if (gzip)
+		{
+			final InputStream requestStream = new GZIPInputStream(input, (int) contentLength);
+			IOUtils.copyStream(requestStream, output, -1);
+		}
+		else
+		{
+			IOUtils.copyStream(input, output, contentLength);
+		}
+		
+		output.flush();
 	}
 }

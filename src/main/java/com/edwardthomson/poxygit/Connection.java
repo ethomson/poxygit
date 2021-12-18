@@ -25,8 +25,11 @@ import java.util.concurrent.ExecutorService;
 
 import com.edwardthomson.poxygit.RequestInfo.GitRequestType;
 import com.edwardthomson.poxygit.RequestInfo.RequestType;
+import com.edwardthomson.poxygit.handlers.PackRedirectHandler;
 import com.edwardthomson.poxygit.handlers.ReceivePackHandler;
 import com.edwardthomson.poxygit.handlers.ReferencesHandler;
+import com.edwardthomson.poxygit.handlers.ReferencesProxyHandler;
+import com.edwardthomson.poxygit.handlers.ReferencesRedirectHandler;
 import com.edwardthomson.poxygit.handlers.RequestHandler;
 import com.edwardthomson.poxygit.handlers.UploadPackHandler;
 import com.edwardthomson.poxygit.logger.LogLevel;
@@ -291,6 +294,12 @@ public class Connection implements Runnable
 		}
 	}
 
+	private static boolean repositoryPassThrough(RequestInfo requestInfo)
+	{
+		return (requestInfo.getRequestType() == RequestType.InitialRedirect ||
+				requestInfo.getRequestType() == RequestType.SubsequentRedirect);
+	}
+
 	private RequestRoute route(Request request, Response response) throws Exception
 	{
 		RequestInfo requestInfo;
@@ -307,7 +316,8 @@ public class Connection implements Runnable
 
 		String repository = requestInfo.getRepositoryPath();
 
-		if (repository.contains("/") || repository.contains("\\") || repository.equals(".") || repository.equals(".."))
+		if (!repositoryPassThrough(requestInfo) &&
+			(repository.contains("/") || repository.contains("\\") || repository.equals(".") || repository.equals("..")))
 		{
 			response.writeError(Status.NOT_FOUND, "Path not found");
 			return new RequestRoute(RequestStatus.Stop);
@@ -318,7 +328,6 @@ public class Connection implements Runnable
 		if (requestInfo.getRequestType() == RequestType.Basic || requestInfo.getRequestType() == RequestType.NTLM ||
 				requestInfo.getRequestType() == RequestType.BrokenNTLM)
 		{
-
 			if (!authenticate(requestInfo, request, response))
 			{
 				return new RequestRoute(RequestStatus.Retry);
@@ -330,9 +339,21 @@ public class Connection implements Runnable
 			response.writeError(Status.BAD_REQUEST, "Dumb HTTP is not supported");
 			return null;
 		}
+		else if (requestInfo.getGitRequestType() == GitRequestType.References && requestInfo.getRequestType() == RequestType.InitialRedirect)
+		{
+			return new RequestRoute(new ReferencesRedirectHandler(this, repository, requestInfo.getService()));
+		}
+		else if (requestInfo.getGitRequestType() == GitRequestType.References && requestInfo.getRequestType() == RequestType.SubsequentRedirect)
+		{
+			return new RequestRoute(new ReferencesProxyHandler(this, repository, requestInfo.getService()));			
+		}		
 		else if (requestInfo.getGitRequestType() == GitRequestType.References)
 		{
 			return new RequestRoute(new ReferencesHandler(this, repositoryPath, requestInfo.getService()));
+		}
+		else if (requestInfo.getRequestType() == RequestType.SubsequentRedirect)
+		{
+			return new RequestRoute(new PackRedirectHandler(this, repository, requestInfo.getGitRequestType()));
 		}
 		else if (requestInfo.getGitRequestType() == GitRequestType.UploadPack)
 		{

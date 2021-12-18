@@ -18,7 +18,9 @@ public class RequestInfo
 		Anonymous("anonymous"),
 		Basic("basic"),
 		NTLM("ntlm"),
-		BrokenNTLM("broken-ntlm");
+		BrokenNTLM("broken-ntlm"),
+        InitialRedirect("initial-redirect"),
+        SubsequentRedirect("subsequent-redirect");
 
 		private String name;
 
@@ -87,19 +89,57 @@ public class RequestInfo
 	{
 		return repositoryPath;
 	}
+	
+	private static String joinRepositoryPath(String[] path, int start, int end)
+	{
+		final StringBuilder result = new StringBuilder();
+
+		for (int i = start; i < end; i++)
+		{
+			if (i > start)
+			{
+				result.append('/');
+			}
+			
+			result.append(path[i]);
+		}
+		
+		return result.toString();
+	}
 
 	public static RequestInfo parseRequest(Request request) throws FileNotFoundException
 	{
 		String[] components = request.getURI().split("\\?", 2);
-		String[] path = components[0].split("/", 4);
+		String[] path = components[0].split("/");
 
-		if (path.length != 4 || !path[0].equals(""))
+		if (path.length < 4 || !path[0].equals(""))
 		{
 			throw new FileNotFoundException();
 		}
 
-		RequestType requestType;
-		String repository = path[2];
+		final RequestType requestType;
+		final GitRequestType gitRequestType;
+		final String repository;
+
+		if (path[path.length - 2].equals("info") && path[path.length - 1].equals("refs"))
+		{
+			gitRequestType = GitRequestType.References;
+			repository = joinRepositoryPath(path, 2, path.length - 2);
+		}
+		else if (path[path.length - 1].equals("git-upload-pack"))
+		{
+			gitRequestType = GitRequestType.UploadPack;
+			repository = joinRepositoryPath(path, 2, path.length - 1);			
+		}
+		else if (path[path.length - 1].equals("git-receive-pack"))
+		{
+			gitRequestType = GitRequestType.ReceivePack;
+			repository = joinRepositoryPath(path, 2, path.length - 1);
+		}
+		else
+		{
+			throw new FileNotFoundException();			
+		}
 
 		try
 		{
@@ -110,7 +150,7 @@ public class RequestInfo
 			throw new FileNotFoundException();
 		}
 
-		if (request.getMethod().equals(Constants.GET_METHOD) && path[3].equals("info/refs"))
+		if (request.getMethod().equals(Constants.GET_METHOD) && gitRequestType == GitRequestType.References)
 		{
 			if (components[1].equals("service=git-upload-pack"))
 			{
@@ -126,12 +166,12 @@ public class RequestInfo
 			}
 		}
 
-		else if (request.getMethod().equals(Constants.POST_METHOD) && path[3].equals("git-upload-pack"))
+		else if (request.getMethod().equals(Constants.POST_METHOD) && gitRequestType == GitRequestType.UploadPack)
 		{
 			return new RequestInfo(requestType, GitRequestType.UploadPack, repository);
 		}
 
-		else if (request.getMethod().equals(Constants.POST_METHOD) && path[3].equals("git-receive-pack"))
+		else if (request.getMethod().equals(Constants.POST_METHOD) && gitRequestType == GitRequestType.ReceivePack)
 		{
 			return new RequestInfo(requestType, GitRequestType.ReceivePack, repository);
 		}

@@ -89,6 +89,8 @@ public class Options
 	 */
 	private int responseDelayMilliseconds;
 
+	private volatile String redirectHost = null;
+
 	public Options()
 	{
 	}
@@ -237,5 +239,15 @@ public class Options
 	public int getMaxHeaderSizeBytes()
 	{
 		return maxHeaderSizeBytes;
+	}
+	
+	public String getRedirectHost()
+	{
+		return this.redirectHost;
+	}
+	
+	public void setRedirectHost(String redirectHost)
+	{
+		this.redirectHost = redirectHost;
 	}
 }
