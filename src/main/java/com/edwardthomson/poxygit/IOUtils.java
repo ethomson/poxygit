@@ -317,15 +317,19 @@ public class IOUtils
 	
 	public static void copyHttpStreamToStream(List<Header> headers, InputStream input, OutputStream output) throws IOException
 	{
+		boolean chunked = HeaderUtils.isChunked(headers);
 		long contentLength = HeaderUtils.getContentLength(headers);
-		boolean chunked = false;
-		boolean gzip = HeaderUtils.isGzip(headers);
+
+		if (!chunked && contentLength < 0)
+		{
+			throw new IOException("invalid content length");
+		}
 
 		if (chunked)
 		{
 			IOUtils.copyChunkedStreamToStream(input, output);
 		}
-		else if (gzip)
+		else if (HeaderUtils.isGzip(headers))
 		{
 			final InputStream requestStream = new GZIPInputStream(input, (int) contentLength);
 			IOUtils.copyStream(requestStream, output, -1);
