@@ -30,6 +30,7 @@ public class Response
 {
 	private final static Logger logger = Logger.getLogger(Response.class);
 
+	private final ThrottledOutputStream throttler;
 	private final CountingOutputStream out;
 
 	private String version;
@@ -38,8 +39,14 @@ public class Response
 
 	public Response(final OutputStream out, final String version)
 	{
-		this.out = new CountingOutputStream(new BufferedOutputStream(out));
+		this.throttler = new ThrottledOutputStream(out);
+		this.out = new CountingOutputStream(new BufferedOutputStream(throttler));
 		this.version = version;
+	}
+
+	public void setThrottledSpeed(double bps)
+	{
+		this.throttler.setSpeed(bps);
 	}
 
 	public String getVersion()

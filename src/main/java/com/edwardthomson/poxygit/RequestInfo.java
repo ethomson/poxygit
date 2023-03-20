@@ -20,7 +20,11 @@ public class RequestInfo
 		NTLM("ntlm"),
 		BrokenNTLM("broken-ntlm"),
         InitialRedirect("initial-redirect"),
-        SubsequentRedirect("subsequent-redirect");
+        SubsequentRedirect("subsequent-redirect"),
+        Speed9600bps("speed-9600"),
+        Speed300bps("speed-300"),
+        SpeedZeroPointFivebps("speed-0.5"),
+        SpeedZero("speed-zero");
 
 		private String name;
 
@@ -152,11 +156,11 @@ public class RequestInfo
 
 		if (request.getMethod().equals(Constants.GET_METHOD) && gitRequestType == GitRequestType.References)
 		{
-			if (components[1].equals("service=git-upload-pack"))
+			if (components.length >= 2 && components[1].equals("service=git-upload-pack"))
 			{
 				return new RequestInfo(requestType, GitRequestType.References, "upload-pack", repository);
 			}
-			else if (components[1].equals("service=git-receive-pack"))
+			else if (components.length >= 2 && components[1].equals("service=git-receive-pack"))
 			{
 				return new RequestInfo(requestType, GitRequestType.References, "receive-pack", repository);
 			}

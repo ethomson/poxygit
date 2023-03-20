@@ -333,6 +333,28 @@ public class Connection implements Runnable
 				return new RequestRoute(RequestStatus.Retry);
 			}
 		}
+		else if (requestInfo.getRequestType() == RequestType.Speed9600bps ||
+				 requestInfo.getRequestType() == RequestType.Speed300bps ||
+				 requestInfo.getRequestType() == RequestType.SpeedZeroPointFivebps ||
+				 requestInfo.getRequestType() == RequestType.SpeedZero)
+		{
+			switch (requestInfo.getRequestType()) {
+			case Speed9600bps:
+				response.setThrottledSpeed(9600);
+				break;
+			case Speed300bps:
+				response.setThrottledSpeed(300);
+				break;
+			case SpeedZeroPointFivebps:
+				response.setThrottledSpeed(0.5);
+				break;
+			case SpeedZero:
+				response.setThrottledSpeed(0);
+				break;
+			default:
+				throw new Exception("unhandled request type speed");
+			}
+		}
 
 		if (requestInfo.getGitRequestType() == GitRequestType.References && requestInfo.getService() == null)
 		{
