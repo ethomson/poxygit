@@ -19,12 +19,13 @@ public class RequestInfo
 		Basic("basic"),
 		NTLM("ntlm"),
 		BrokenNTLM("broken-ntlm"),
-        InitialRedirect("initial-redirect"),
-        SubsequentRedirect("subsequent-redirect"),
-        Speed9600bps("speed-9600"),
-        Speed300bps("speed-300"),
-        SpeedZeroPointFivebps("speed-0.5"),
-        SpeedZero("speed-zero");
+		NoKeepAlive("no-keep-alive"),
+		InitialRedirect("initial-redirect"),
+		SubsequentRedirect("subsequent-redirect"),
+		Speed9600bps("speed-9600"),
+		Speed300bps("speed-300"),
+		SpeedZeroPointFivebps("speed-0.5"),
+		SpeedZero("speed-zero");
 
 		private String name;
 

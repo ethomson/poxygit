@@ -36,6 +36,7 @@ public class Response
 	private String version;
 	private long contentLength = -1;
 	private List<Header> headers = new ArrayList<Header>();
+	private boolean shouldClose = false;
 
 	public Response(final OutputStream out, final String version)
 	{
@@ -47,6 +48,16 @@ public class Response
 	public void setThrottledSpeed(double bps)
 	{
 		this.throttler.setSpeed(bps);
+	}
+
+	public void setClose(boolean shouldClose)
+	{
+		this.shouldClose = shouldClose;
+	}
+
+	public boolean shouldClose()
+	{
+		return this.shouldClose;
 	}
 
 	public String getVersion()

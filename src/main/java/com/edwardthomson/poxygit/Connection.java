@@ -265,7 +265,8 @@ public class Connection implements Runnable
 					break;
 				}
 
-				if (HeaderUtils.isConnectionClose(response.getHeaders()))
+				if (response.shouldClose() ||
+					HeaderUtils.isConnectionClose(response.getHeaders()))
 				{
 					keepAlive = false;
 				}
@@ -354,6 +355,11 @@ public class Connection implements Runnable
 			default:
 				throw new Exception("unhandled request type speed");
 			}
+		}
+
+		if (requestInfo.getRequestType() == RequestType.NoKeepAlive)
+		{
+			response.setClose(true);
 		}
 
 		if (requestInfo.getGitRequestType() == GitRequestType.References && requestInfo.getService() == null)
