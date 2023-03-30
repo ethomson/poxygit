@@ -18,6 +18,12 @@ stage) or subsequently (during the actual push/fetch). Generally, git
 clients will allow the _initial_ redirect and reject the _subsequent_
 redirects.
 
+## Keep-alive
+
+The server can close keep-alive connections after the first request
+to ensure that clients successfully reconnect and send the next
+response on a new socket.
+
 ## Speed
 
 The server can throttle the speed to a variety of speeds for testing
