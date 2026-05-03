@@ -85,11 +85,6 @@ public class Response
 		return out.getCount();
 	}
 
-	public void setHeaders(List<Header> headers)
-	{
-		this.headers = headers;
-	}
-
 	public List<Header> getHeaders()
 	{
 		return headers;
@@ -162,7 +157,6 @@ public class Response
 
 	public void writeHeaders(Iterable<Header> headers) throws IOException
 	{
-
 		for (Header h : headers)
 		{
 			writeHeader(h);
@@ -171,7 +165,6 @@ public class Response
 
 	public void writeHeader(Header h) throws IOException
 	{
-
 		if (h == null)
 		{
 			return;
@@ -191,6 +184,7 @@ public class Response
 			}
 		}
 
+		headers.add(h);
 		writeLine(h.toString());
 	}
 
