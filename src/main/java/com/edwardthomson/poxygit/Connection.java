@@ -20,6 +20,7 @@ import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -418,7 +419,7 @@ public class Connection implements Runnable
 	private boolean authenticate(RequestInfo requestInfo, Request request, Response response) throws Exception
 	{
 		final Header authentication = findHeader(Constants.AUTHORIZATION_HEADER, request.getHeaders());
-		final List<Header> responseHeaders = response.getHeaders();
+		final List<Header> responseHeaders = new ArrayList<Header>();
 		String challengeMessage = null;
 
 		if (authentication != null)
