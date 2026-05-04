@@ -135,7 +135,13 @@ public class RedirectHandler extends RequestHandler {
 		else if (redirectOptions.responseLength == RedirectHandlerResponseLength.Padded)
 		{
 			/* Pad larger than the size of a TLS packet to ensure that we spill over. */
-			final String padded = ".".repeat((16 * 1024) + 1);
+			String padded = "";
+
+			for (int i = 0; i < (16 * 1024) + 1; i++)
+			{
+				padded = padded + ".";
+			}
+
 			rawMessage = (message + padded).getBytes(UTF8Utils.UTF8_CHARSET);
 		}
 		else
