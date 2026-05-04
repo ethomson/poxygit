@@ -30,6 +30,8 @@ public interface Constants
 
 	// Headers
 
+	public static final String HOST_HEADER = "Host";
+
 	public static final String CONNECTION_HEADER = "Connection";
 	public static final String CONNECTION_KEEP_ALIVE = "Keep-Alive";
 	public static final String CONNECTION_CLOSE = "Close";

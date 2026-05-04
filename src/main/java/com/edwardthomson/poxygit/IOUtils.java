@@ -46,6 +46,12 @@ public class IOUtils
 		return UTF8Utils.decode(rawLine);
 	}
 
+	public static void writeString(final OutputStream stream, final String message) throws IOException
+	{
+		final byte[] rawMessage = message.getBytes(UTF8Utils.UTF8_CHARSET);
+		stream.write(rawMessage);
+	}
+
 	private static byte[] readRawLine(final InputStream input) throws IOException
 	{
 		int read = 0;
@@ -57,7 +63,6 @@ public class IOUtils
 
 			if (b == -1)
 			{
-
 				if (read == 0)
 				{
 					return null;

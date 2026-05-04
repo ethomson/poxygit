@@ -20,12 +20,10 @@ public class RequestInfo
 		NTLM("ntlm"),
 		BrokenNTLM("broken-ntlm"),
 		NoKeepAlive("no-keep-alive"),
+		LocalRedirect("local-redirect"),
 		InitialRedirect("initial-redirect"),
 		SubsequentRedirect("subsequent-redirect"),
-		Speed9600bps("speed-9600"),
-		Speed300bps("speed-300"),
-		SpeedZeroPointFivebps("speed-0.5"),
-		SpeedZero("speed-zero");
+		Speed("speed");
 
 		private String name;
 
@@ -58,18 +56,20 @@ public class RequestInfo
 	}
 
 	private final RequestType requestType;
+	private final String requestTypeSpecification;
 	private final GitRequestType gitRequestType;
 	private final String repositoryPath;
 	private final String service;
 
-	private RequestInfo(RequestType requestType, GitRequestType gitRequestType, String repositoryPath)
+	private RequestInfo(RequestType requestType, String requestTypeSpecification, GitRequestType gitRequestType, String repositoryPath)
 	{
-		this(requestType, gitRequestType, null, repositoryPath);
+		this(requestType, requestTypeSpecification, gitRequestType, null, repositoryPath);
 	}
 
-	private RequestInfo(RequestType requestType, GitRequestType gitRequestType, String service, String repositoryPath)
+	private RequestInfo(RequestType requestType, String requestTypeSpecification, GitRequestType gitRequestType, String service, String repositoryPath)
 	{
 		this.requestType = requestType;
+		this.requestTypeSpecification = requestTypeSpecification;
 		this.gitRequestType = gitRequestType;
 		this.service = service;
 		this.repositoryPath = repositoryPath;
@@ -78,6 +78,11 @@ public class RequestInfo
 	public RequestType getRequestType()
 	{
 		return requestType;
+	}
+
+	public String getRequestTypeSpecification()
+	{
+		return requestTypeSpecification;
 	}
 
 	public GitRequestType getGitRequestType()
@@ -123,6 +128,7 @@ public class RequestInfo
 		}
 
 		final RequestType requestType;
+		final String requestTypeSpecification;
 		final GitRequestType gitRequestType;
 		final String repository;
 
@@ -148,7 +154,10 @@ public class RequestInfo
 
 		try
 		{
-			requestType = RequestType.byName(path[1]);
+			String[] requestTypeComponents = path[1].split(":", 2);
+
+			requestType = RequestType.byName(requestTypeComponents[0]);
+			requestTypeSpecification = requestTypeComponents.length == 2 ? requestTypeComponents[1] : null;
 		}
 		catch (IllegalArgumentException e)
 		{
@@ -159,26 +168,26 @@ public class RequestInfo
 		{
 			if (components.length >= 2 && components[1].equals("service=git-upload-pack"))
 			{
-				return new RequestInfo(requestType, GitRequestType.References, "upload-pack", repository);
+				return new RequestInfo(requestType, requestTypeSpecification, GitRequestType.References, "upload-pack", repository);
 			}
 			else if (components.length >= 2 && components[1].equals("service=git-receive-pack"))
 			{
-				return new RequestInfo(requestType, GitRequestType.References, "receive-pack", repository);
+				return new RequestInfo(requestType, requestTypeSpecification, GitRequestType.References, "receive-pack", repository);
 			}
 			else
 			{
-				return new RequestInfo(requestType, GitRequestType.References, repository);
+				return new RequestInfo(requestType, requestTypeSpecification, GitRequestType.References, repository);
 			}
 		}
 
 		else if (request.getMethod().equals(Constants.POST_METHOD) && gitRequestType == GitRequestType.UploadPack)
 		{
-			return new RequestInfo(requestType, GitRequestType.UploadPack, repository);
+			return new RequestInfo(requestType, requestTypeSpecification, GitRequestType.UploadPack, repository);
 		}
 
 		else if (request.getMethod().equals(Constants.POST_METHOD) && gitRequestType == GitRequestType.ReceivePack)
 		{
-			return new RequestInfo(requestType, GitRequestType.ReceivePack, repository);
+			return new RequestInfo(requestType, requestTypeSpecification, GitRequestType.ReceivePack, repository);
 		}
 
 		throw new FileNotFoundException();

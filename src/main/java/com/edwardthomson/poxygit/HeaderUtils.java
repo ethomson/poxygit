@@ -28,9 +28,21 @@ public abstract class HeaderUtils
 	public static final HeaderFilter DISALLOW_FOR_DIRECT_REQUESTS = new HeaderFilter(new String[] { "proxy-connection",
 			"proxy-authorization", "proxy-authenticate", "connection", "keep-alive" });
 
+	public static String getHeader(List<Header> headers, String name)
+	{
+		for (Header h : headers)
+		{
+			if (h.matchesName(Constants.HOST_HEADER))
+			{
+				return h.getValue();
+			}
+		}
+
+		return null;
+	}
+
 	public static boolean isChunked(List<Header> headers)
 	{
-
 		for (Header h : headers)
 		{
 			// HTTP 1.1 Section 4.4: any Transfer-Encoding other than "identity"
@@ -67,7 +79,6 @@ public abstract class HeaderUtils
 
 		for (Header h : headers)
 		{
-
 			if (h.matchesName(Constants.CONNECTION_HEADER) && h.getValue().equalsIgnoreCase(Constants.CONNECTION_CLOSE))
 			{
 				return true;
@@ -82,7 +93,6 @@ public abstract class HeaderUtils
 
 		for (Header h : headers)
 		{
-
 			if (h.matchesName(Constants.CONNECTION_HEADER) &&
 					h.getValue().equalsIgnoreCase(Constants.CONNECTION_KEEP_ALIVE))
 			{
@@ -98,7 +108,6 @@ public abstract class HeaderUtils
 
 		for (Header h : headers)
 		{
-
 			if (h.matchesName(Constants.PROXY_CONNECTION_HEADER) &&
 					h.getValue().equalsIgnoreCase(Constants.CONNECTION_CLOSE))
 			{

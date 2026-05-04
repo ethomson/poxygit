@@ -89,7 +89,7 @@ public class Options
 	 */
 	private int responseDelayMilliseconds;
 
-	private volatile String redirectHost = null;
+	private volatile String redirectHost = "https://github.com/";
 
 	public Options()
 	{

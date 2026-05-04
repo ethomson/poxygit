@@ -16,6 +16,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
@@ -25,11 +26,12 @@ import java.util.concurrent.ExecutorService;
 
 import com.edwardthomson.poxygit.RequestInfo.GitRequestType;
 import com.edwardthomson.poxygit.RequestInfo.RequestType;
-import com.edwardthomson.poxygit.handlers.PackRedirectHandler;
 import com.edwardthomson.poxygit.handlers.ReceivePackHandler;
+import com.edwardthomson.poxygit.handlers.RedirectHandler;
+import com.edwardthomson.poxygit.handlers.RedirectHandler.RedirectHandlerOptions;
+import com.edwardthomson.poxygit.handlers.RedirectHandler.RedirectHandlerResponseLength;
 import com.edwardthomson.poxygit.handlers.ReferencesHandler;
 import com.edwardthomson.poxygit.handlers.ReferencesProxyHandler;
-import com.edwardthomson.poxygit.handlers.ReferencesRedirectHandler;
 import com.edwardthomson.poxygit.handlers.RequestHandler;
 import com.edwardthomson.poxygit.handlers.UploadPackHandler;
 import com.edwardthomson.poxygit.logger.LogLevel;
@@ -297,7 +299,8 @@ public class Connection implements Runnable
 
 	private static boolean repositoryPassThrough(RequestInfo requestInfo)
 	{
-		return (requestInfo.getRequestType() == RequestType.InitialRedirect ||
+		return (requestInfo.getRequestType() == RequestType.LocalRedirect ||
+				requestInfo.getRequestType() == RequestType.InitialRedirect ||
 				requestInfo.getRequestType() == RequestType.SubsequentRedirect);
 	}
 
@@ -334,27 +337,10 @@ public class Connection implements Runnable
 				return new RequestRoute(RequestStatus.Retry);
 			}
 		}
-		else if (requestInfo.getRequestType() == RequestType.Speed9600bps ||
-				 requestInfo.getRequestType() == RequestType.Speed300bps ||
-				 requestInfo.getRequestType() == RequestType.SpeedZeroPointFivebps ||
-				 requestInfo.getRequestType() == RequestType.SpeedZero)
+		else if (requestInfo.getRequestType() == RequestType.Speed)
 		{
-			switch (requestInfo.getRequestType()) {
-			case Speed9600bps:
-				response.setThrottledSpeed(9600);
-				break;
-			case Speed300bps:
-				response.setThrottledSpeed(300);
-				break;
-			case SpeedZeroPointFivebps:
-				response.setThrottledSpeed(0.5);
-				break;
-			case SpeedZero:
-				response.setThrottledSpeed(0);
-				break;
-			default:
-				throw new Exception("unhandled request type speed");
-			}
+			double speed = Double.parseDouble(requestInfo.getRequestTypeSpecification());
+			response.setThrottledSpeed(speed);
 		}
 
 		if (requestInfo.getRequestType() == RequestType.NoKeepAlive)
@@ -367,21 +353,53 @@ public class Connection implements Runnable
 			response.writeError(Status.BAD_REQUEST, "Dumb HTTP is not supported");
 			return null;
 		}
+
+		/* Local, same-site redirects to a different path. */
+		else if (requestInfo.getRequestType() == RequestType.LocalRedirect)
+		{
+			final RedirectHandlerOptions redirectOptions = new RedirectHandlerOptions();
+			redirectOptions.uri = new URI("/initial-redirect");
+			redirectOptions.responseLength = RedirectHandlerResponseLength.parse(requestInfo.getRequestTypeSpecification());
+			
+			return new RequestRoute(new RedirectHandler(this, repository, requestInfo.getService(), redirectOptions));
+		}
+
+		/* Off-site redirects. */
 		else if (requestInfo.getGitRequestType() == GitRequestType.References && requestInfo.getRequestType() == RequestType.InitialRedirect)
 		{
-			return new RequestRoute(new ReferencesRedirectHandler(this, repository, requestInfo.getService()));
+			final RedirectHandlerOptions redirectOptions = new RedirectHandlerOptions();
+			redirectOptions.uri = new URI(options.getRedirectHost());
+			redirectOptions.responseLength = RedirectHandlerResponseLength.parse(requestInfo.getRequestTypeSpecification());
+
+			return new RequestRoute(new RedirectHandler(this, repository, requestInfo.getService(), redirectOptions));
 		}
+		
+		/*
+		 * For off-site "subsequent" redirects, we serve up the /info/refs
+		 * request ourselves (and proxy it so that we answer it correctly).
+		 * Then the actual pack request we will send the redirect for.
+		 */
 		else if (requestInfo.getGitRequestType() == GitRequestType.References && requestInfo.getRequestType() == RequestType.SubsequentRedirect)
 		{
-			return new RequestRoute(new ReferencesProxyHandler(this, repository, requestInfo.getService()));			
-		}		
-		else if (requestInfo.getGitRequestType() == GitRequestType.References)
-		{
-			return new RequestRoute(new ReferencesHandler(this, repositoryPath, requestInfo.getService()));
+			final RedirectHandlerOptions redirectOptions = new RedirectHandlerOptions();
+			redirectOptions.uri = new URI(options.getRedirectHost());
+			redirectOptions.responseLength = RedirectHandlerResponseLength.parse(requestInfo.getRequestTypeSpecification());
+
+			return new RequestRoute(new ReferencesProxyHandler(this, repository, requestInfo.getService(), redirectOptions));
 		}
 		else if (requestInfo.getRequestType() == RequestType.SubsequentRedirect)
 		{
-			return new RequestRoute(new PackRedirectHandler(this, repository, requestInfo.getGitRequestType()));
+			final RedirectHandlerOptions redirectOptions = new RedirectHandlerOptions();
+			redirectOptions.uri = new URI(options.getRedirectHost());
+			redirectOptions.responseLength = RedirectHandlerResponseLength.parse(requestInfo.getRequestTypeSpecification());
+
+			return new RequestRoute(new RedirectHandler(this, repository, requestInfo.getGitRequestType(), redirectOptions));
+		}
+
+		/* Standard refs and pack requests. */
+		else if (requestInfo.getGitRequestType() == GitRequestType.References)
+		{
+			return new RequestRoute(new ReferencesHandler(this, repositoryPath, requestInfo.getService()));
 		}
 		else if (requestInfo.getGitRequestType() == GitRequestType.UploadPack)
 		{

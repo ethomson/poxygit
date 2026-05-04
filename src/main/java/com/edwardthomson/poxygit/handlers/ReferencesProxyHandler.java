@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 
 import com.edwardthomson.poxygit.Connection;
@@ -29,11 +30,11 @@ import com.edwardthomson.poxygit.logger.Logger;
  */
 public class ReferencesProxyHandler extends RedirectHandler
 {	
-	private static final Logger logger = Logger.getLogger(ReferencesRedirectHandler.class);
+	private static final Logger logger = Logger.getLogger(ReferencesProxyHandler.class);
 
-	public ReferencesProxyHandler(Connection connection, String repository, String service)
+	public ReferencesProxyHandler(Connection connection, String repository, String service, final RedirectHandlerOptions redirectOptions)
 	{
-		super(connection, repository, service);
+		super(connection, repository, service, redirectOptions);
 	}
 
 	@Override
@@ -42,7 +43,7 @@ public class ReferencesProxyHandler extends RedirectHandler
 		final String redirect;
 		try
 		{
-			redirect = getRedirect();
+			redirect = getRedirect(request);
 		}
 		catch (Exception e)
 		{
